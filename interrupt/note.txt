@@ -1,0 +1,26 @@
+
+
+I8259可编程中断控制器：
+
+pci设备 interrupt PIN: INTA,INTB,INTC,INTD 具体pci设备对应哪个INTX是有硬件决定的
+pci设备配置空间中的interrupt PIN不是最终使用的Interrupt pin, 使用的interrupt pin是由各级
+连线决定； 一般pci配置空间中都填入INTA, 然后每个INTA线绕到可编程中断控制器的INTA,INTB,INTC,INTD
+
+pci插槽 pci插槽  pci插槽
+  |      |        略
+ INTA  INTA
+  |      |
+  |      |
+ INTB  INTB     
+  |      |      
+  |      |
+ INTC   INTC     
+  |      | 
+  |      |
+  |      |
+ INTD   INTD     
+
+可编程中断路由器负责路由INTx到中断控制器上的中断线
+pci设备 interrupt line: 中断路由器给pci设备（具体是INTX)分配的中断线
+
+中断线（物理中断线，数值填在pci配置空间中）->中断向量（中断控制器控制）->linux中的中断号
