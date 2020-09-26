@@ -1,0 +1,411 @@
+
+submit_bio()
+	generic_make_request()
+		q->make_request_fn()
+			blk_mq_make_request() ----------(如果current中有plug,合并process中的io之后直接返回)参见下面注1-------------
+				__blk_mq_alloc_request() 
+				if (likely(rq))
+					blk_mq_rq_ctx_init(ctx, rq, rw);
+				blk_mq_alloc_request_pinned()
+注1：
+blk_mq_make_request（）
+....
+943         /*
+ 944          * A task plug currently exists. Since this is completely lockless,
+ 945          * utilize that to temporarily store requests until the task is
+ 946          * either done or scheduled away.
+ 947          */
+ 948         if (use_plug) {
+ 949                 struct blk_plug *plug = current->plug;
+ 950 
+ 951                 if (plug) {
+ 952                         blk_mq_bio_to_request(rq, bio);
+ 953                         if (list_empty(&plug->mq_list))
+ 954                                 trace_block_plug(q);
+ 955                         else if (request_count >= BLK_MAX_REQUEST_COUNT) {
+ 956                                 blk_flush_plug_list(plug, false);
+ 957                                 trace_block_plug(q);
+ 958                         }
+ 959                         list_add_tail(&rq->queuelist, &plug->mq_list);
+ 960                         blk_mq_put_ctx(ctx);
+ 961                         return;
+ 962                 }
+ 963         }
+....
+
+blk_schedule_flush_plug()  flush io to device run_queue
+
+schedule()
+sched_submit_work()  如果进程上有plug的io,则首先flush io
+	blk_schedule_flush_plug()
+		blk_flush_plug_list(plug, true);
+	
+
+read io都会调用io_schedule等待io结束，而 write io不一定，他会写进cache, 然后bdi上的writeback进程会刷入block queue.
+
+write io在下面这种情况下会调用schedule io等待 （写元数据是时）
+[  146.060243]  [<ffffffff8117ce7e>] __wait_on_buffer+0x2e/0x30
+[  146.060828]  [<ffffffff811c3a98>] ext4_wait_block_bitmap+0xc8/0xd0
+
+
+
+单队列和多队列相同的执行路径：
+submit_bio（）
+	generic_make_request（）
+		q->make_request_fn()
+			__elv_add_request()
+		
+		
+blk_start_plug()  (1)
+
+对于io读来说： 中间的步骤对应以下注释2（read_pages()）：
+
+
+generic_make_request（）
+		q->make_request_fn() 调用blk_queue_bio()或者多队列blk_queue_make_request()
+			__elv_add_request()
+			
+blk_finish_plug() (2)
+io_schedule() (3)进程蓄水之后等待io完成
+ (在blk_mq_make_request()函数中request_count >= BLK_MAX_REQUEST_COUNT 不需要调用io_schedule())
+	
+
+	
+单队列：
+blk_queue_make_request(q, blk_queue_bio);  blk_queue_bio()是默认 
+make_request_fn回调函数，比如nvme上有自己的回调函数 nvme_make_request()
+
+插入request队列的时候使用spinlock锁
+blk_queue_bio（）
+spin_lock_irq(q->queue_lock);
+elv_merge（）
+spin_lock_irq(q->queue_lock);
+
+情况1
+__blk_run_queue（）
+	q->request_fn(q);
+情况二：
+调度器触发request_queue上的delay_work 的worker_thread 
+struct request_queue *blk_alloc_queue_node（）
+	INIT_DELAYED_WORK(&q->delay_work, blk_delay_work);
+
+blk_delay_work()
+	__blk_run_queue()
+		q->request_fn(q);
+	
+
+__blk_run_queue（）函数必须在队列锁中，也就是spin_lock_irq(q->queue_lock);
+ 280 /**
+ 281  * __blk_run_queue - run a single device queue
+ 282  * @q:  The queue to run
+ 283  *
+ 284  * Description:
+ 285  *    See @blk_run_queue. This variant must be called with the queue lock
+ 286  *    held and interrupts disabled.
+ 287  */     
+ 288 void __blk_run_queue(struct request_queue *q)
+ 289 {       
+ 290         if (unlikely(blk_queue_stopped(q)))
+ 291                 return;
+ 292 
+ 293         __blk_run_queue_uncond(q);
+ 294 }
+
+		
+多队列：
+blk_queue_make_request(q, blk_mq_make_request); make request_fn 回调函数 blk_mq_make_request()
+
+
+触发 blk_mq_hw_ctx上 的delay_work worker_thread 对应 blk_mq_work_fn（）
+
+static int blk_mq_init_hw_queues()
+	INIT_DELAYED_WORK(&hctx->delayed_work, blk_mq_work_fn);
+
+ 708 static void blk_mq_work_fn(struct work_struct *work)
+ 709 {               
+ 710         struct blk_mq_hw_ctx *hctx;
+ 711                 
+ 712         hctx = container_of(work, struct blk_mq_hw_ctx, delayed_work.work);
+ 713         __blk_mq_run_hw_queue(hctx);
+ 714 }   
+
+__blk_mq_run_hw_queue（）  
+    没有spinlock锁
+	q->mq_ops->queue_rq(hctx, rq); 执行多队列上的->queue_rq()回调函数
+
+lock:
+
+blk_mq_insert_requests()
+	__blk_mq_insert_request()
+		struct blk_mq_ctx *ctx = rq->mq_ctx; (每cpu上的blk_mq_ctx)
+		list_add_tail(&rq->queuelist, &ctx->rq_list)
+	
+.............................................................
+note:
+read or sync 
+ 614  * We regard a request as sync, if either a read or a sync write
+ 615  */     
+ 616 static inline bool rw_is_sync(unsigned int rw_flags)
+ 617 {       
+ 618         return !(rw_flags & REQ_WRITE) || (rw_flags & REQ_SYNC);
+ 619 }  
+
+#define REQ_FUA                 (1ULL << __REQ_FUA)
+REQ_FLUSH
+
+155         __REQ_FUA,              /* forced unit access */
+156         __REQ_FLUSH,            /* request for cache flush */
+
+request发送到驱动的时候，如果返回:
+  case BLK_MQ_RQ_QUEUE_BUSY:
+调用blk_mq_requeue_request() 重新给驱动提交request
+
+
+request超时处理:
+virtio-blk为例 request的超时处理
+virtblk_probe()
+q = vblk->disk->queue = blk_mq_init_queue(&virtio_mq_reg, vblk);
+blk_mq_init_queue（）
+setup_timer(&q->timeout, blk_mq_rq_timer, (unsigned long) q);
+blk_mq_rq_timer（）
+blk_mq_hw_ctx_check_timeout()
+blk_mq_timeout_check()
+blk_rq_check_expired（）
+blk_rq_timed_out()
+	q->rq_timed_out_fn(req);
+	
+blk_queue_rq_timed_out(q, reg->ops->timeout);	
+ 90 void blk_queue_rq_timed_out(struct request_queue *q, rq_timed_out_fn *fn)
+ 91 {        
+ 92         q->rq_timed_out_fn = fn;
+ 93 } 
+ 
+对于scsi:
+struct request_queue *scsi_alloc_queue(struct scsi_device *sdev)
+	blk_queue_rq_timed_out(q, scsi_times_out);
+	
+	
+	
+	
+	
+注释2：
+当读数据时，在read_pages()函数中进行进程蓄水
+mm/readahead.c
+
+read_pages()
+{
+	blk_start_plug()
+	mapping->a_ops->readpages()
+	blk_finish_plug()
+}
+
+static int read_pages(struct address_space *mapping, struct file *filp,
+                struct list_head *pages, unsigned nr_pages)
+{
+        struct blk_plug plug;
+        unsigned page_idx;
+        int ret;
+
+        blk_start_plug(&plug);
+
+        if (mapping->a_ops->readpages) {
+                pr_info("%s %d\n", __func__, __LINE__); //<debug-for-jeff>
+                ret = mapping->a_ops->readpages(filp, mapping, pages, nr_pages);
+                /* Clean up the remaining pages */
+                put_pages_list(pages);
+                goto out;
+        }   
+
+        for (page_idx = 0; page_idx < nr_pages; page_idx++) {
+                struct page *page = list_to_page(pages);
+                list_del(&page->lru);
+                if (!add_to_page_cache_lru(page, mapping,
+                                        page->index, GFP_KERNEL)) {
+                        pr_info("%s %d\n", __func__, __LINE__); //<debug-for-jeff>
+                        mapping->a_ops->readpage(filp, page);
+                }   
+                page_cache_release(page);
+        }   
+        ret = 0;
+
+out:
+        blk_finish_plug(&plug);
+
+        return ret;
+}
+
+	
+	
+.............................................................
+For read:
+
+[   94.652242]  [<ffffffff81538f5a>] dump_stack+0x19/0x1f
+[   94.652779]  [<ffffffff8103e66b>] warn_slowpath_common+0x6b/0xa0
+[   94.653417]  [<ffffffff8103e6b5>] warn_slowpath_null+0x15/0x20
+[   94.654013]  [<ffffffff81243b13>] __blk_mq_alloc_request+0x43/0x70
+[   94.654656]  [<ffffffff812447e6>] blk_mq_make_request+0x106/0x470
+[   94.655275]  [<ffffffff810e1b01>] ? mempool_alloc_slab+0x11/0x20
+[   94.655909]  [<ffffffff8123be22>] generic_make_request+0xd2/0x110
+[   94.656550]  [<ffffffff8123bec2>] submit_bio+0x62/0x110
+[   94.657107]  [<ffffffff8116296b>] ? bio_alloc_bioset+0x9b/0x1c0
+[   94.657725]  [<ffffffff8115d5f3>] _submit_bh+0x153/0x220
+[   94.658269]  [<ffffffff8115d6cb>] submit_bh+0xb/0x10
+[   94.658794]  [<ffffffff8115fe18>] block_read_full_page+0x1e8/0x330
+[   94.659447]  [<ffffffff81163ba0>] ? I_BDEV+0x10/0x10
+[   94.659951]  [<ffffffff810dfdeb>] ? add_to_page_cache_locked+0x8b/0x110
+[   94.660646]  [<ffffffff811649a3>] blkdev_readpage+0x13/0x20
+[   94.661215]  [<ffffffff810eb3d0>] __do_page_cache_readahead+0x200/0x270
+[   94.661940]  [<ffffffff811321b0>] ? mount_ns+0xd0/0xd0
+[   94.662484]  [<ffffffff8114ba1c>] ? mntput_no_expire+0x4c/0x1a0
+[   94.663107]  [<ffffffff810eb45c>] ra_submit+0x1c/0x20
+[   94.663636]  [<ffffffff810eb735>] ondemand_readahead+0x115/0x240
+[   94.664249]  [<ffffffff810eb941>] page_cache_sync_readahead+0x31/0x50
+[   94.664920]  [<ffffffff810e111c>] generic_file_aio_read+0x4bc/0x6f0
+[   94.665579]  [<ffffffff81163da3>] blkdev_aio_read+0x53/0x80
+[   94.666172]  [<ffffffff8112d8ad>] do_sync_read+0x7d/0xc0
+[   94.666731]  [<ffffffff8112dab4>] ? rw_verify_area+0x54/0xf0
+[   94.667312]  [<ffffffff8112de44>] vfs_read+0xc4/0x110
+[   94.667843]  [<ffffffff8112e47c>] SyS_read+0x5c/0xa0
+[   94.668385]  [<ffffffff815445f2>] system_call_fastpath+0x16/0x1b
+
+
+
+for write-back
+  98 static void bdi_queue_work(struct backing_dev_info *bdi,
+  99                            struct wb_writeback_work *work)
+ 100 {       
+ 101         trace_writeback_queue(bdi, work);
+ 102         
+ 103         spin_lock_bh(&bdi->wb_lock);
+ 104         if (!test_bit(BDI_registered, &bdi->state)) {
+ 105                 if (work->done)
+ 106                         complete(work->done);
+ 107                 goto out_unlock;
+ 108         }
+ 109         list_add_tail(&work->list, &bdi->work_list);
+ 110         mod_delayed_work(bdi_wq, &bdi->wb.dwork, 0);
+ 
+queue_delayed_work(bdi_wq, &bdi->wb.dwork, timeout);
+
+423 static void bdi_wb_init(struct bdi_writeback *wb, struct backing_dev_info *bdi)
+424 {
+425         memset(wb, 0, sizeof(*wb));
+426                 
+427         wb->bdi = bdi;
+428         wb->last_old_flush = jiffies;
+429         INIT_LIST_HEAD(&wb->b_dirty);
+430         INIT_LIST_HEAD(&wb->b_io);
+431         INIT_LIST_HEAD(&wb->b_more_io);
+432         spin_lock_init(&wb->list_lock);
+433         INIT_DELAYED_WORK(&wb->dwork, bdi_writeback_workfn);
+434 }
+
+bdi_writeback_workfn()
+
+blk_mq_init_queue()
+	blk_init_queue_node()
+		bdi_init()
+			bdi_wb_init()
+
+
+blk_start_plug(&plug);
+中间是plug的过程 merge request等   每个进程的io 排序
+blk_finish_plug(&plug);
+
+comm: cat
+
+[   41.891600] Call Trace:
+[   41.891870]  [<ffffffff817d8438>] dump_stack+0x19/0x21
+[   41.892488]  [<ffffffff81040160>] warn_slowpath_common+0x70/0xa0
+[   41.893135]  [<ffffffff810401aa>] warn_slowpath_null+0x1a/0x20
+[   41.893778]  [<ffffffff812b9650>] blk_finish_plug+0x50/0x80
+[   41.894402]  [<ffffffff811070f3>] __do_page_cache_readahead+0x1f3/0x280
+[   41.895132]  [<ffffffff811071a1>] ra_submit+0x21/0x30
+[   41.895675]  [<ffffffff81107495>] ondemand_readahead+0x115/0x240
+[   41.896343]  [<ffffffff811076b6>] page_cache_sync_readahead+0x36/0x50
+[   41.897073]  [<ffffffff811797ba>] __generic_file_splice_read+0x4ca/0x4f0
+[   41.897827]  [<ffffffff81123719>] ? handle_pte_fault+0x99/0x800
+[   41.898484]  [<ffffffff811a98b4>] ? dquot_file_open+0x24/0x60
+[   41.899125]  [<ffffffff811c4eff>] ? ext4_file_open+0x6f/0x240
+[   41.899741]  [<ffffffff8128a9e0>] ? selinux_file_open+0xc0/0xd0
+[   41.900400]  [<ffffffff81169b31>] ? mntput_no_expire+0x51/0x1a0
+[   41.901057]  [<ffffffff810fb0ee>] ? find_get_page+0x1e/0xb0
+[   41.901674]  [<ffffffff810fba19>] ? filemap_fault+0xb9/0x410
+[   41.902289]  [<ffffffff811774a0>] ? page_cache_pipe_buf_release+0x30/0x30
+[   41.903094]  [<ffffffff8117982f>] generic_file_splice_read+0x4f/0x90
+[   41.903791]  [<ffffffff81177d17>] do_splice_to+0x77/0xb0
+[   41.904368]  [<ffffffff811787fc>] splice_direct_to_actor+0xcc/0x1e0
+[   41.905045]  [<ffffffff81177e60>] ? do_splice_from+0x110/0x110
+[   41.905690]  [<ffffffff81178974>] do_splice_direct+0x64/0x90
+[   41.906324]  [<ffffffff8114ab09>] ? rw_verify_area+0x59/0x100
+[   41.906939]  [<ffffffff8114b723>] do_sendfile+0x1a3/0x240
+[   41.907581]  [<ffffffff8114c87c>] SyS_sendfile64+0x3c/0xc0
+[   41.908197]  [<ffffffff817e44e2>] system_call_fastpath+0x16/0x1b
+
+comm: sync  首先会把各个进程的plug释放
+plug:
+[  112.083830] Call Trace:
+[  112.084126]  [<ffffffff817d8438>] dump_stack+0x19/0x21
+[  112.084714]  [<ffffffff81040160>] warn_slowpath_common+0x70/0xa0
+[  112.085381]  [<ffffffff810401aa>] warn_slowpath_null+0x1a/0x20
+[  112.086039]  [<ffffffff812b68b3>] blk_start_plug+0x73/0xa0
+[  112.086665]  [<ffffffff81105e6c>] generic_writepages+0x3c/0x80
+[  112.087338]  [<ffffffff81105ed0>] do_writepages+0x20/0x40
+[  112.087916]  [<ffffffff810fc0e6>] __filemap_fdatawrite_range+0x66/0x70
+[  112.088641]  [<ffffffff810fc35f>] filemap_fdatawrite+0x1f/0x30
+[  112.089274]  [<ffffffff8117a256>] fdatawrite_one_bdev+0x16/0x20
+[  112.089926]  [<ffffffff81182bee>] iterate_bdevs+0xce/0x100
+[  112.090543]  [<ffffffff8117a240>] ? do_sync_work+0xa0/0xa0
+[  112.091157]  [<ffffffff8117a2f3>] sys_sync+0x63/0x90
+[  112.091730]  [<ffffffff817e44e2>] system_call_fastpath+0x16/0x1b
+
+finish plug:
+
+[  112.099700] Call Trace:
+[  112.099988]  [<ffffffff817d8438>] dump_stack+0x19/0x21
+[  112.100549]  [<ffffffff81040160>] warn_slowpath_common+0x70/0xa0
+[  112.101198]  [<ffffffff810401aa>] warn_slowpath_null+0x1a/0x20
+[  112.101863]  [<ffffffff812b9650>] blk_finish_plug+0x50/0x80
+[  112.102525]  [<ffffffff81105e8c>] generic_writepages+0x5c/0x80
+[  112.103174]  [<ffffffff81105ed0>] do_writepages+0x20/0x40
+[  112.103752]  [<ffffffff810fc0e6>] __filemap_fdatawrite_range+0x66/0x70
+[  112.104446]  [<ffffffff810fc35f>] filemap_fdatawrite+0x1f/0x30
+[  112.105116]  [<ffffffff8117a256>] fdatawrite_one_bdev+0x16/0x20
+[  112.105769]  [<ffffffff81182bee>] iterate_bdevs+0xce/0x100
+[  112.106383]  [<ffffffff8117a240>] ? do_sync_work+0xa0/0xa0
+[  112.106986]  [<ffffffff8117a2f3>] sys_sync+0x63/0x90
+[  112.107527]  [<ffffffff817e44e2>] system_call_fastpath+0x16/0x1b
+
+writeback:
+
+[   90.171210] Workqueue: writeback bdi_writeback_workfn (flush-8:0)
+
+[   90.174731] Call Trace:
+[   90.175016]  [<ffffffff817d8438>] dump_stack+0x19/0x21
+[   90.175576]  [<ffffffff81040160>] warn_slowpath_common+0x70/0xa0
+[   90.176224]  [<ffffffff810401aa>] warn_slowpath_null+0x1a/0x20
+[   90.176886]  [<ffffffff812b68b3>] blk_start_plug+0x73/0xa0
+[   90.177504]  [<ffffffff81105e6c>] generic_writepages+0x3c/0x80
+[   90.178170]  [<ffffffff81105ed0>] do_writepages+0x20/0x40
+[   90.178789]  [<ffffffff811736f7>] __writeback_single_inode+0x77/0x220
+[   90.179520]  [<ffffffff81174c02>] writeback_sb_inodes+0x2a2/0x470
+[   90.180196]  [<ffffffff81174e77>] __writeback_inodes_wb+0xa7/0xe0
+[   90.180905]  [<ffffffff811751db>] wb_writeback+0x28b/0x2b0
+[   90.181501]  [<ffffffff812dfffb>] ? vsnprintf+0x19b/0x5b0
+[   90.182105]  [<ffffffff8117542b>] wb_do_writeback+0x22b/0x240
+[   90.182741]  [<ffffffff811754e2>] bdi_writeback_workfn+0xa2/0x240
+[   90.183438]  [<ffffffff8105eeec>] process_one_work+0x19c/0x4a0
+[   90.184109]  [<ffffffff810601b3>] worker_thread+0x133/0x410
+[   90.184748]  [<ffffffff81060080>] ? manage_workers+0x290/0x290
+[   90.185418]  [<ffffffff81065ebe>] kthread+0xce/0xe0
+[   90.185941]  [<ffffffff81065df0>] ? kthread_freezable_should_stop+0x70/0x70
+[   90.186707]  [<ffffffff817e4438>] ret_from_fork+0x58/0x90
+[   90.187293]  [<ffffffff81065df0>] ? kthread_freezable_should_stop+0x70/0x70
+
+
+refer to:
+1.https://www.yuanguohuo.com/2019/10/04/linux-block-layer-plug-unplug/
+	
+
+ 
+				
