@@ -1,0 +1,55 @@
+max_graph_depth == 20
+
+root@x86 nvme]# /trace
+# tracer: function_graph
+
+
+# CPU  DURATION                  FUNCTION CALLS
+# |     |   |                     |   |   |   |
+ 6)               |  nvme_queue_rq() {
+ 6)   0.231 us    |    nvme_setup_cmd();
+ 6)   0.186 us    |    blk_rq_map_sg();
+ 6)               |    intel_map_sg() {
+ 6)   0.202 us    |      iommu_no_mapping();
+ 6)   0.036 us    |      get_valid_domain_for_dev();
+ 6)   0.255 us    |      domain_get_iommu();
+ 6)               |      intel_alloc_iova() {
+ 6)               |        alloc_iova_fast() {
+ 6)   0.132 us    |          _raw_spin_lock_irqsave();
+ 6)   0.044 us    |          _raw_spin_unlock_irqrestore();
+ 6)   0.837 us    |        }
+ 6)   1.127 us    |      }
+ 6)               |      domain_mapping() {
+ 6)               |        __domain_mapping() {
+ 6)   0.209 us    |          pfn_to_dma_pte();
+ 6)   0.171 us    |          clflush_cache_range();
+ 6)   1.087 us    |        }
+ 6)   0.090 us    |        domain_get_iommu();
+ 6)   0.047 us    |        iommu_flush_write_buffer();
+ 6)   2.111 us    |      }
+ 6)   5.427 us    |    }
+ 6)               |    blk_mq_start_request() {
+ 6)               |      blk_add_timer() {
+ 6)   0.034 us    |        round_jiffies_up();
+ 6)   0.033 us    |        round_jiffies_up();
+ 6)   0.662 us    |      }
+ 6)   1.237 us    |    }
+ 6)               |    nvme_submit_cmd() {
+ 6)   0.032 us    |      _raw_spin_lock();
+ 6) + 34.042 us   |    }
+ 6) + 44.166 us   |  }
+
+max_graph_depth == 2
+
+[root@x86 nvme]# /trace
+# tracer: function_graph
+#
+# CPU  DURATION                  FUNCTION CALLS
+# |     |   |                     |   |   |   |
+ 7)               |  nvme_queue_rq() {
+ 7)   0.237 us    |    nvme_setup_cmd();
+ 7)   0.192 us    |    blk_rq_map_sg();
+ 7)   1.967 us    |    intel_map_sg();
+ 7)   0.295 us    |    blk_mq_start_request();
+ 7) + 20.969 us   |    nvme_submit_cmd();
+ 7) + 26.360 us   |  }
