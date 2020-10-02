@@ -1,0 +1,6 @@
+
+Boot ftraces comline args example:
+trace_options=func_stack_trace ftrace=function ftrace_filter="nvme_queue_rq"
+ftrace=function_graph ftrace_graph_filter="nvme_queue_rq"
+
+refer to:https://www.kernel.org/doc/html/latest/trace/boottime-trace.html
