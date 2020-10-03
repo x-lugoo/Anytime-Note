@@ -1,6 +1,25 @@
 
 Boot ftraces comline args example:
-trace_options=func_stack_trace ftrace=function ftrace_filter="nvme_queue_rq"
-ftrace=function_graph ftrace_graph_filter="nvme_queue_rq"
+1. trace_options=func_stack_trace ftrace=function ftrace_filter="nvme_queue_rq"
+2. ftrace=function_graph ftrace_graph_filter="nvme_queue_rq"
+3. trace_event="workqueue:workqueue_queue_work"
 
-refer to:https://www.kernel.org/doc/html/latest/trace/boottime-trace.html
+refer to:
+https://www.kernel.org/doc/html/latest/trace/boottime-trace.html
+
+trace-event:
+
+cd /sys/kernel/debug/tracing/events/kmem/kmalloc
+1. echo 'stacktrace:4 if bytes_req==512' > ./trigger
+2. echo 'stacktrace:4 if bytes_req >= 512' > ./trigger
+3. or echo 'stacktrace' > ./trigger 
+
+1. when bytes_req equals 512 , when calling kmalloc ,print the current
+   stacktrace
+3. print stacktrace, when calling kmalloc
+
+trigger and filter are indenpense.
+
+refer to:
+https://lwn.net/Articles/555884/
+
