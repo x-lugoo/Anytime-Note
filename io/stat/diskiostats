@@ -1,0 +1,8 @@
+cat /proc/diskiostats or 
+cat /sys/block/nvme0n1/stat 
+
+The output explain:
+	https://www.kernel.org/doc/Documentation/iostats.txt
+
+The key is the 9th segment. it represents the io which is
+in the fly.
