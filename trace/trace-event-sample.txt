@@ -1,0 +1,11 @@
+#271581184=0x10300000(dev_t:259,0)
+cd /sys/kernel/debug/tracing/events/block
+echo 'stacktrace:3 if dev==271581184' | tee -a ./*/trigger
+echo 'stacktrace if comm=="dd"' > ./block_unplug/trigger
+echo 'stacktrace if comm=="dd"' > ./block_plug/trigger
+echo 'dev==271581184' > ./filter
+echo 1 > ./enable
+
+dd if=/dev/zero of=/dev/nvme0n1 bs=1M count=1
+cat /sys/kernel/debug/tracing/trace_pipe
+
