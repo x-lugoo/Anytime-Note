@@ -1,0 +1,92 @@
+From 9cad7d4bae68de5af442323fdf8dc21971bcb4e7 Mon Sep 17 00:00:00 2001
+From: Jeff Xie <chongguiguzi@gmail.com>
+Date: Tue, 6 Oct 2020 11:39:52 +0800
+Subject: [PATCH] add debug request helper
+
+---
+ block/blk-mq-debugfs.c | 49 +++++++++++++++++++++++++++++++++++++++++++++++++
+ block/blk-mq-debugfs.h |  1 +
+ 2 files changed, 50 insertions(+)
+
+diff --git a/block/blk-mq-debugfs.c b/block/blk-mq-debugfs.c
+index 3f09bcb8..c3280882 100644
+--- a/block/blk-mq-debugfs.c
++++ b/block/blk-mq-debugfs.c
+@@ -92,6 +92,26 @@ static int blk_flags_show(struct seq_file *m, const unsigned long flags,
+ 	return 0;
+ }
+ 
++static int blk_flags_show_noseq(const unsigned long flags,
++			  const char *const *flag_name, int flag_name_count)
++{
++	bool sep = false;
++	int i;
++
++	for (i = 0; i < sizeof(flags) * BITS_PER_BYTE; i++) {
++		if (!(flags & BIT(i)))
++			continue;
++		if (sep)
++			printk(KERN_CONT KERN_INFO"|");
++		sep = true;
++		if (i < flag_name_count && flag_name[i])
++			printk(KERN_CONT KERN_INFO"%s",flag_name[i]);
++		else
++			printk(KERN_CONT KERN_INFO"%d", i);
++	}
++	return 0;
++}
++
+ static int queue_pm_only_show(void *data, struct seq_file *m)
+ {
+ 	struct request_queue *q = data;
+@@ -358,6 +378,35 @@ int blk_mq_debugfs_rq_show(struct seq_file *m, void *v)
+ }
+ EXPORT_SYMBOL_GPL(blk_mq_debugfs_rq_show);
+ 
++int debug_rq_show(struct request *rq)
++{
++	unsigned int op = 0;
++
++	if (!rq) {
++		pr_info("rq==NULL");
++		WARN_ON(1);
++		return -EINVAL;
++	}
++	op = req_op(rq);
++	printk(KERN_CONT KERN_INFO"%llx {.op=", (unsigned long long)rq);
++	if (strcmp(blk_op_str(op), "UNKNOWN") == 0)
++		printk(KERN_CONT KERN_INFO"%u", op);
++	else
++		printk(KERN_CONT KERN_INFO"%s", blk_op_str(op));
++	printk(KERN_CONT KERN_INFO"\n .cmd_flags=");
++	blk_flags_show_noseq(rq->cmd_flags & ~REQ_OP_MASK, cmd_flag_name,
++		       ARRAY_SIZE(cmd_flag_name));
++	printk(KERN_CONT KERN_INFO"\n .rq_flags=");
++	blk_flags_show_noseq((__force unsigned int)rq->rq_flags, rqf_name,
++		       ARRAY_SIZE(rqf_name));
++	printk(KERN_INFO" .state=%s", blk_mq_rq_state_name(blk_mq_rq_state(rq)));
++	printk(KERN_INFO" .tag=%d, .internal_tag=%d", rq->tag,
++		   rq->internal_tag);
++	pr_info("}");
++	return 0;
++}
++EXPORT_SYMBOL_GPL(debug_rq_show);
++
+ static void *hctx_dispatch_start(struct seq_file *m, loff_t *pos)
+ 	__acquires(&hctx->lock)
+ {
+diff --git a/block/blk-mq-debugfs.h b/block/blk-mq-debugfs.h
+index a68aa60..3bbbe57 100644
+--- a/block/blk-mq-debugfs.h
++++ b/block/blk-mq-debugfs.h
+@@ -16,6 +16,7 @@ struct blk_mq_debugfs_attr {
+ };
+ 
+ int __blk_mq_debugfs_rq_show(struct seq_file *m, struct request *rq);
++int debug_rq_show(struct request *rq);
+ int blk_mq_debugfs_rq_show(struct seq_file *m, void *v);
+ 
+ void blk_mq_debugfs_register(struct request_queue *q);
+-- 
+1.8.3.1
+
