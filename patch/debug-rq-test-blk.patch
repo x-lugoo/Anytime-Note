@@ -1,0 +1,29 @@
+diff --git a/drivers/block/test_blk.c b/drivers/block/test_blk.c
+index ce41148..2300ed6 100644
+--- a/drivers/block/test_blk.c
++++ b/drivers/block/test_blk.c
+@@ -16,6 +16,7 @@
+ #include <linux/hrtimer.h>
+ #include <linux/radix-tree.h>
+ #include <linux/idr.h>
++#include "../../block/blk-mq-debugfs.h"
+ 
+ #define SECTOR_SHIFT		9
+ #define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+@@ -783,8 +784,15 @@ static int testb_handle_rq(struct request *rq)
+ 	if (req_op(rq) == REQ_OP_DISCARD) {
+ 		testb_handle_discard(testb, sector, blk_rq_bytes(rq));
+ 		return 0;
+-	} else if (req_op(rq) == REQ_OP_FLUSH)
++	} else if (req_op(rq) == REQ_OP_FLUSH) {
++		blk_dump_rq_flags(rq, "debug flush");
++		pr_info(" comm: %s\n", current->comm);
++		debug_rq_show(rq);
+ 		return testb_handle_flush(testb);
++	}
++	blk_dump_rq_flags(rq, "debug non-flush");
++	pr_info(" comm: %s\n", current->comm);
++	debug_rq_show(rq);
+ 
+ 	len = blk_rq_bytes(rq);
+ 	if (testb_throttled(testb)) {
