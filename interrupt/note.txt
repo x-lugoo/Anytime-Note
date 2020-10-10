@@ -24,3 +24,17 @@ pci插槽 pci插槽  pci插槽
 pci设备 interrupt line: 中断路由器给pci设备（具体是INTX)分配的中断线
 
 中断线（物理中断线，数值填在pci配置空间中）->中断向量（中断控制器控制）->linux中的中断号
+
+#lspci -vvv 输出linux中的中断号：
+Interrupt: pin A routed to IRQ 19
+#lspci -vvvb 输出设备看到的中断号(pci配置空间的号，也叫中断线）
+Interrupt: pin A routed to IRQ 255
+
+#lspci -xxx 验证：
+00: 86 80 0f 10 07 01 30 02 01 00 00 02 10 00 00 00
+10: 04 00 52 fd 00 00 00 00 04 00 51 fd 00 00 00 00
+20: 21 20 00 00 00 00 00 00 00 00 00 00 ad 15 50 07
+30: 00 00 00 00 dc 00 00 00 00 00 00 00 ff（0x3c位 代表中断线） 01 ff 00
+
+
+
