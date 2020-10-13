@@ -1,0 +1,26 @@
+
+#enable ftrace for block io
+root#echo blk > /sys/kernel/debug/tracing/current_tracer
+root#echo 1 > /sys/block/nvme0n1/trace/enable
+
+#get the filesystem type.
+
+root#df -T (ext4)
+/dev/nvme0n1   ext4     240233268 71579272 156427684  32% /home/jeff/nvme
+
+#get block device number
+root#ls -l /dev/nvme0n1
+brw-rw---- 1 root disk 259, 0 Oct 13 18:15 /dev/nvme0n1
+
+#only trace ext4 && block device 271581184=0x10300000(dev_t:259,0)
+echo "dev==271581184" > /sys/kernel/debug/tracing/events/ext4/filter
+
+
+action:
+
+root#cp /home/jeff/nvme/a-file > /dev/null
+
+root#cat /sys/kernel/debug/tracing/trace :
+
+> a-experiment-to-know-io-trace.log
+
