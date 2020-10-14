@@ -24,3 +24,139 @@ root#cat /sys/kernel/debug/tracing/trace :
 
 > a-experiment-to-know-io-trace.log
 
+----------------------
+add:
+
+cd /sys/kernel/debug/tracing/events/ext4
+echo "stacktrace" | tee  ./*/trigger 
+
+=> trace_event_raw_event_ext4_es_lookup_extent_enter
+ => ext4_es_lookup_extent
+ => ext4_map_blocks
+ => ext4_mpage_readpages
+ => read_pages
+ => __do_page_cache_readahead
+ => ondemand_readahead
+ => generic_file_read_iter
+ => new_sync_read
+ => vfs_read
+ => ksys_read
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+ 
+ 
+echo '!stacktrace' | tee  ./*/trigger 
+cd /sys/kernel/debug/tracing 
+echo 1 > ./options/stacktrace
+
+
+             cat-14274 [001] d... 58409.729910: 259,0    Q  RA 124845312 + 512 [cat]
+             cat-14274 [001] d... 58409.729911: <stack trace>
+ => generic_make_request_checks
+ => generic_make_request
+ => submit_bio
+ => ext4_mpage_readpages
+ => read_pages
+ => __do_page_cache_readahead
+ => ondemand_readahead
+ => generic_file_read_iter
+ => new_sync_read
+ => vfs_read
+ => ksys_read
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+
+
+             cat-14274 [001] d... 58409.729912: 259,0    G  RA 124845312 + 512 [cat]
+             cat-14274 [001] d... 58409.729913: <stack trace>
+ => blk_mq_make_request
+ => generic_make_request
+ => submit_bio
+ => ext4_mpage_readpages
+ => read_pages
+ => __do_page_cache_readahead
+ => ondemand_readahead
+ => generic_file_read_iter
+ => new_sync_read
+ => vfs_read
+ => ksys_read
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+
+
+
+             cat-14274 [001] d... 58409.729914: 259,0    P   N [cat]
+             cat-14274 [001] d... 58409.729915: <stack trace>
+ => blk_mq_make_request
+ => generic_make_request
+ => submit_bio
+ => ext4_mpage_readpages
+ => read_pages
+ => __do_page_cache_readahead
+ => ondemand_readahead
+ => generic_file_read_iter
+ => new_sync_read
+ => vfs_read
+ => ksys_read
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+
+
+
+             cat-14274 [001] d... 58409.729915: 259,0    U   N [cat] 1
+             cat-14274 [001] d... 58409.729916: <stack trace>
+ => blk_mq_flush_plug_list
+ => blk_flush_plug_list
+ => blk_finish_plug
+ => read_pages
+ => __do_page_cache_readahead
+ => ondemand_readahead
+ => generic_file_read_iter
+ => new_sync_read
+ => vfs_read
+ => ksys_read
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+
+
+
+             cat-14274 [001] d... 58409.729917: 259,0    D  RA 124845312 + 512 [cat]
+             cat-14274 [001] d... 58409.729919: <stack trace>
+ => blk_mq_start_request
+ => nvme_queue_rq
+ => __blk_mq_try_issue_directly
+ => blk_mq_request_issue_directly
+ => blk_mq_try_issue_list_directly
+ => blk_mq_sched_insert_requests
+ => blk_mq_flush_plug_list
+ => blk_flush_plug_list
+ => blk_finish_plug
+ => read_pages
+ => __do_page_cache_readahead
+ => ondemand_readahead
+ => generic_file_read_iter
+ => new_sync_read
+ => vfs_read
+ => ksys_read
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+
+ => entry_SYSCALL_64_after_hwframe
+          <idle>-0     [001] d.h. 58409.729998: 259,0    C  RA 124844800 + 512 [0]
+          <idle>-0     [001] d.h. 58409.729999: <stack trace>
+ => blk_update_request
+ => blk_mq_end_request
+ => blk_mq_complete_request
+ => nvme_irq
+ => __handle_irq_event_percpu
+ => handle_irq_event_percpu
+ => handle_irq_event
+ => handle_edge_irq
+ => do_IRQ
+ => ret_from_intr
+ => cpuidle_enter_state
+ => cpuidle_enter
+ => do_idle
+ => cpu_startup_entry
+ => start_secondary
+ => secondary_startup_64
