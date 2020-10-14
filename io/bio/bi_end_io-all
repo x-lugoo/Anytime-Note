@@ -1,0 +1,237 @@
+Documentation/block/biodoc.rst:1068:Now bh->b_end_io is replaced by bio->bi_end_io, but most of the time the
+block/bio.c:340:	BUG_ON(bio->bi_private || bio->bi_end_io);
+block/bio.c:343:	bio->bi_end_io	= bio_chain_endio;
+block/bio.c:1149:	bio->bi_end_io = submit_bio_wait_endio;
+block/bio.c:1410: *   using bio_chain().  The ->bi_end_io() function will only be called the
+block/bio.c:1433:	if (bio->bi_end_io == bio_chain_endio) {
+block/bio.c:1446:	if (bio->bi_end_io)
+block/bio.c:1447:		bio->bi_end_io(bio);
+block/blk-core.c:1069: * completion, is delivered asynchronously through the ->bi_end_io() callback
+block/blk-core.c:1070: * in @bio.  The bio must NOT be touched by thecaller until ->bi_end_io() has
+block/blk-crypto-fallback.c:347:	enc_bio->bi_end_io = blk_crypto_fallback_encrypt_endio;
+block/blk-crypto-fallback.c:452:	bio->bi_end_io = f_ctx->bi_end_io_orig;
+block/blk-crypto-fallback.c:515:	f_ctx->bi_end_io_orig = bio->bi_end_io;
+block/blk-crypto-fallback.c:517:	bio->bi_end_io = blk_crypto_fallback_decrypt_endio;
+block/blk-map.c:428:	bio->bi_end_io = bio_map_kern_endio;
+block/blk-map.c:506:		bio->bi_end_io = bio_copy_kern_endio_read;
+block/blk-map.c:509:		bio->bi_end_io = bio_copy_kern_endio;
+block/bounce.c:348:		bio->bi_end_io = bounce_end_io_write;
+block/bounce.c:350:			bio->bi_end_io = bounce_end_io_read;
+block/bounce.c:352:		bio->bi_end_io = bounce_end_io_write_isa;
+block/bounce.c:354:			bio->bi_end_io = bounce_end_io_read_isa;
+drivers/block/drbd/drbd_actlog.c:148:	bio->bi_end_io = drbd_md_endio;
+drivers/block/drbd/drbd_bitmap.c:1015:	bio->bi_end_io = drbd_bm_endio;
+drivers/block/drbd/drbd_receiver.c:1301:	bio->bi_end_io = one_flush_endio;
+drivers/block/drbd/drbd_receiver.c:1700:	bio->bi_end_io = drbd_peer_request_endio;
+drivers/block/drbd/drbd_req.h:267:	bio->bi_end_io   = drbd_request_endio;
+drivers/block/pktcdvd.c:1033:		bio->bi_end_io = pkt_end_io_read;
+drivers/block/pktcdvd.c:1213:	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
+drivers/block/pktcdvd.c:2281:	cloned_bio->bi_end_io = pkt_end_io_read_cloned;
+drivers/block/rnbd/rnbd-srv.c:160:	bio->bi_end_io = rnbd_dev_bi_end_io;
+drivers/block/xen-blkback/blkback.c:1377:			bio->bi_end_io  = end_block_io_op;
+drivers/block/xen-blkback/blkback.c:1396:		bio->bi_end_io  = end_block_io_op;
+drivers/block/zram/zram_drv.c:613:		bio->bi_end_io = zram_page_end_io;
+drivers/block/zram/zram_drv.c:1659:	 * bio->bi_end_io does things to handle the error
+drivers/md/bcache/btree.c:253:	bio->bi_end_io	= btree_node_read_endio;
+drivers/md/bcache/btree.c:348:	b->bio->bi_end_io	= btree_node_write_endio;
+drivers/md/bcache/journal.c:61:		bio->bi_end_io	= journal_read_endio;
+drivers/md/bcache/journal.c:625:		bio->bi_end_io		= journal_discard_endio;
+drivers/md/bcache/journal.c:802:		bio->bi_end_io	= journal_write_endio;
+drivers/md/bcache/movinggc.c:164:		bio->bi_end_io	= read_moving_endio;
+drivers/md/bcache/request.c:229:		n->bi_end_io	= bch_data_insert_endio;
+drivers/md/bcache/request.c:560:	n->bi_end_io	= bch_cache_read_endio;
+drivers/md/bcache/request.c:693:	 * - cache_bio->bi_end_io from cached_dev_cache_miss()
+drivers/md/bcache/request.c:694:	 * - n->bi_end_io from cache_lookup_fn()
+drivers/md/bcache/request.c:696:	bio->bi_end_io		= end_io_fn;
+drivers/md/bcache/request.c:926:	cache_bio->bi_end_io	= backing_request_endio;
+drivers/md/bcache/request.c:946:	miss->bi_end_io		= backing_request_endio;
+drivers/md/bcache/request.c:1017:		bio->bi_end_io = backing_request_endio;
+drivers/md/bcache/request.c:1038:			flush->bi_end_io = backing_request_endio;
+drivers/md/bcache/request.c:1047:		bio->bi_end_io = backing_request_endio;
+drivers/md/bcache/request.c:1065:	bio->bi_end_io = backing_request_endio;
+drivers/md/bcache/request.c:1084:	bio->bi_end_io = ddip->bi_end_io;
+drivers/md/bcache/request.c:1098:	bio->bi_end_io(bio);
+drivers/md/bcache/request.c:1115:	ddip->bi_end_io = bio->bi_end_io;
+drivers/md/bcache/request.c:1117:	bio->bi_end_io = detached_dev_end_io;
+drivers/md/bcache/request.c:1122:		bio->bi_end_io(bio);
+drivers/md/bcache/super.c:316:	bio->bi_end_io	= write_bdev_super_endio;
+drivers/md/bcache/super.c:368:		bio->bi_end_io	= write_super_endio;
+drivers/md/bcache/super.c:415:		bio->bi_end_io	= uuid_endio;
+drivers/md/bcache/super.c:583:	bio->bi_end_io	= prio_endio;
+drivers/md/dm-bio-record.h:39:	bd->bi_end_io = bio->bi_end_io;
+drivers/md/dm-bio-record.h:52:	bio->bi_end_io = bd->bi_end_io;
+drivers/md/dm-bufio.c:639:	bio->bi_end_io = bio_complete;
+drivers/md/dm-cache-target.c:292:	h->bi_end_io = bio->bi_end_io;
+drivers/md/dm-cache-target.c:294:	bio->bi_end_io = bi_end_io;
+drivers/md/dm-cache-target.c:300:	bio->bi_end_io = h->bi_end_io;
+drivers/md/dm-clone-target.c:847:	bio->bi_end_io = hd->overwrite_bio_end_io;
+drivers/md/dm-clone-target.c:861:	hd->overwrite_bio_end_io = bio->bi_end_io;
+drivers/md/dm-clone-target.c:863:	bio->bi_end_io = overwrite_endio;
+drivers/md/dm-crypt.c:1765:	clone->bi_end_io  = crypt_endio;
+drivers/md/dm-integrity.c:2108:	bio->bi_end_io = integrity_end_io;
+drivers/md/dm-io.c:351:		bio->bi_end_io = endio;
+drivers/md/dm-log-writes.c:228:	bio->bi_end_io = (sector == WRITE_LOG_SUPER_SECTOR) ?
+drivers/md/dm-log-writes.c:288:		bio->bi_end_io = log_end_io;
+drivers/md/dm-log-writes.c:375:	bio->bi_end_io = log_end_io;
+drivers/md/dm-log-writes.c:397:			bio->bi_end_io = log_end_io;
+drivers/md/dm-rq.c:331:	bio->bi_end_io = end_clone_bio;
+drivers/md/dm-snap.c:1705:		full_bio->bi_end_io = pe->full_bio_end_io;
+drivers/md/dm-snap.c:1823:	pe->full_bio_end_io = bio->bi_end_io;
+drivers/md/dm-snap.c:1829:	bio->bi_end_io = full_bio_end_io;
+drivers/md/dm-thin.c:863:	bio->bi_end_io = m->saved_bi_end_io;
+drivers/md/dm-thin.c:1189:		discard_parent->bi_end_io = passdown_endio;
+drivers/md/dm-thin.c:1259:	*save = bio->bi_end_io;
+drivers/md/dm-thin.c:1260:	bio->bi_end_io = fn;
+drivers/md/dm-verity-target.c:548:	bio->bi_end_io = io->orig_bi_end_io;
+drivers/md/dm-verity-target.c:676:	io->orig_bi_end_io = bio->bi_end_io;
+drivers/md/dm-verity-target.c:680:	bio->bi_end_io = verity_end_io;
+drivers/md/dm-verity.h:74:	/* original value of bio->bi_end_io */
+drivers/md/dm-writecache.c:1670:		bio->bi_end_io = writecache_writeback_endio;
+drivers/md/dm-zoned-metadata.c:583:	bio->bi_end_io = dmz_mblock_bio_end_io;
+drivers/md/dm-zoned-metadata.c:739:	bio->bi_end_io = dmz_mblock_bio_end_io;
+drivers/md/dm-zoned-target.c:137:	clone->bi_end_io = dmz_clone_endio;
+drivers/md/dm.c:1280:	clone->bi_end_io = clone_endio;
+drivers/md/md-faulty.c:212:		b->bi_end_io = faulty_fail;
+drivers/md/md-multipath.c:327:			bio->bi_end_io = multipath_end_request;
+drivers/md/md.c:477:	bio->bi_end_io = md_io->orig_bi_end_io;
+drivers/md/md.c:482:	if (bio->bi_end_io)
+drivers/md/md.c:483:		bio->bi_end_io(bio);
+drivers/md/md.c:510:	if (bio->bi_end_io != md_end_io) {
+drivers/md/md.c:515:		md_io->orig_bi_end_io = bio->bi_end_io;
+drivers/md/md.c:518:		bio->bi_end_io = md_end_io;
+drivers/md/md.c:617:			bi->bi_end_io = md_end_flush;
+drivers/md/md.c:1004:	bio->bi_end_io = super_written;
+drivers/md/raid1.c:265:		if (bio->bi_end_io)
+drivers/md/raid1.c:1300:	read_bio->bi_end_io = raid1_end_read_request;
+drivers/md/raid1.c:1509:		mbio->bi_end_io	= raid1_end_write_request;
+drivers/md/raid1.c:1986:			bio->bi_end_io = end_sync_write;
+drivers/md/raid1.c:1998:			if (r1_bio->bios[d]->bi_end_io == end_sync_read) {
+drivers/md/raid1.c:2055:			if (r1_bio->bios[d]->bi_end_io != end_sync_read)
+drivers/md/raid1.c:2061:				r1_bio->bios[d]->bi_end_io = NULL;
+drivers/md/raid1.c:2070:			if (r1_bio->bios[d]->bi_end_io != end_sync_read)
+drivers/md/raid1.c:2108:		if (b->bi_end_io != end_sync_read)
+drivers/md/raid1.c:2117:		b->bi_end_io = end_sync_read;
+drivers/md/raid1.c:2125:		if (r1_bio->bios[primary]->bi_end_io == end_sync_read &&
+drivers/md/raid1.c:2127:			r1_bio->bios[primary]->bi_end_io = NULL;
+drivers/md/raid1.c:2143:		if (sbio->bi_end_io != end_sync_read)
+drivers/md/raid1.c:2165:			sbio->bi_end_io = NULL;
+drivers/md/raid1.c:2195:		if (wbio->bi_end_io == NULL ||
+drivers/md/raid1.c:2196:		    (wbio->bi_end_io == end_sync_read &&
+drivers/md/raid1.c:2209:		wbio->bi_end_io = end_sync_write;
+drivers/md/raid1.c:2400:		if (bio->bi_end_io == NULL)
+drivers/md/raid1.c:2724:			bio->bi_end_io = end_sync_write;
+drivers/md/raid1.c:2751:				bio->bi_end_io = end_sync_read;
+drivers/md/raid1.c:2763:				bio->bi_end_io = end_sync_write;
+drivers/md/raid1.c:2767:		if (rdev && bio->bi_end_io) {
+drivers/md/raid1.c:2786:			if (r1_bio->bios[i]->bi_end_io == end_sync_write) {
+drivers/md/raid1.c:2860:			if (bio->bi_end_io) {
+drivers/md/raid1.c:2894:			if (bio->bi_end_io == end_sync_read) {
+drivers/md/raid10.c:1196:	read_bio->bi_end_io = raid10_end_read_request;
+drivers/md/raid10.c:1245:	mbio->bi_end_io	= raid10_end_write_request;
+drivers/md/raid10.c:2024:		if (tbio->bi_end_io != end_sync_read)
+drivers/md/raid10.c:2072:		tbio->bi_end_io = end_sync_write;
+drivers/md/raid10.c:2095:		if (!tbio || !tbio->bi_end_io)
+drivers/md/raid10.c:2097:		if (r10_bio->devs[i].bio->bi_end_io != end_sync_write
+drivers/md/raid10.c:2226:	/* Need to test wbio2->bi_end_io before we call
+drivers/md/raid10.c:2230:	if (wbio2 && !wbio2->bi_end_io)
+drivers/md/raid10.c:2232:	if (wbio->bi_end_io) {
+drivers/md/raid10.c:2610:				r10_bio->devs[m].bio->bi_end_io == NULL)
+drivers/md/raid10.c:2626:				r10_bio->devs[m].repl_bio->bi_end_io == NULL)
+drivers/md/raid10.c:3015:	/* First, we decide what to do and set ->bi_end_io
+drivers/md/raid10.c:3151:				bio->bi_end_io = end_sync_read;
+drivers/md/raid10.c:3176:					bio->bi_end_io = end_sync_write;
+drivers/md/raid10.c:3183:					r10_bio->devs[1].bio->bi_end_io = NULL;
+drivers/md/raid10.c:3188:					bio->bi_end_io = NULL;
+drivers/md/raid10.c:3197:				bio->bi_end_io = end_sync_write;
+drivers/md/raid10.c:3324:				r10_bio->devs[i].repl_bio->bi_end_io = NULL;
+drivers/md/raid10.c:3351:			bio->bi_end_io = end_sync_read;
+drivers/md/raid10.c:3373:			bio->bi_end_io = end_sync_write;
+drivers/md/raid10.c:3386:				if (r10_bio->devs[i].bio->bi_end_io)
+drivers/md/raid10.c:3390:				    r10_bio->devs[i].repl_bio->bi_end_io)
+drivers/md/raid10.c:3479:		if (bio->bi_end_io == end_sync_read) {
+drivers/md/raid10.c:4541:	read_bio->bi_end_io = end_reshape_read;
+drivers/md/raid10.c:4600:		b->bi_end_io = end_reshape_write;
+drivers/md/raid5-cache.c:794:	io->current_bio->bi_end_io = r5l_log_endio;
+drivers/md/raid5-ppl.c:467:	bio->bi_end_io = ppl_log_endio;
+drivers/md/raid5-ppl.c:644:			bio->bi_end_io = ppl_flush_endio;
+drivers/md/raid5.c:1098:			bi->bi_end_io = op_is_write(op)
+drivers/md/raid5.c:1166:			rbi->bi_end_io = raid5_end_write_request;
+drivers/md/raid5.c:5239:	align_bi->bi_end_io  = raid5_align_endio;
+drivers/nvme/target/io-cmd-bdev.c:271:	bio->bi_end_io = nvmet_bio_done;
+drivers/nvme/target/io-cmd-bdev.c:328:	bio->bi_end_io = nvmet_bio_done;
+drivers/nvme/target/io-cmd-bdev.c:378:		bio->bi_end_io = nvmet_bio_done;
+drivers/nvme/target/io-cmd-bdev.c:426:		bio->bi_end_io = nvmet_bio_done;
+drivers/nvme/target/passthru.c:195:	bio->bi_end_io = bio_put;
+drivers/target/target_core_iblock.c:328:	bio->bi_end_io = &iblock_bio_done;
+drivers/target/target_core_iblock.c:382:	bio->bi_end_io = iblock_end_io_flush;
+drivers/target/target_core_pscsi.c:840:	bio->bi_end_io = pscsi_bi_endio;
+drivers/target/target_core_pscsi.c:887:				 * Calls bio_kmalloc() and sets bio->bi_end_io()
+fs/block_dev.c:401:		bio->bi_end_io = blkdev_bio_end_io;
+fs/btrfs/check-integrity.c:1897:					    bio->bi_end_io;
+fs/btrfs/check-integrity.c:1900:					bio->bi_end_io = btrfsic_bio_end_io;
+fs/btrfs/check-integrity.c:2026:				block->orig_bio_end_io = bio->bi_end_io;
+fs/btrfs/check-integrity.c:2029:				bio->bi_end_io = btrfsic_bio_end_io;
+fs/btrfs/check-integrity.c:2089:	bp->bi_end_io = block->orig_bio_end_io;
+fs/btrfs/check-integrity.c:2119:	bp->bi_end_io(bp);
+fs/btrfs/check-integrity.c:2746:			block->orig_bio_end_io = bio->bi_end_io;
+fs/btrfs/check-integrity.c:2749:			bio->bi_end_io = btrfsic_bio_end_io;
+fs/btrfs/compression.c:442:	bio->bi_end_io = end_compressed_bio_write;
+fs/btrfs/compression.c:489:			bio->bi_end_io = end_compressed_bio_write;
+fs/btrfs/compression.c:729:	comp_bio->bi_end_io = end_compressed_bio_read;
+fs/btrfs/compression.c:779:			comp_bio->bi_end_io = end_compressed_bio_read;
+fs/btrfs/disk-io.c:732:	end_io_wq->end_io = bio->bi_end_io;
+fs/btrfs/disk-io.c:739:	bio->bi_end_io = end_workqueue_bio;
+fs/btrfs/disk-io.c:1694:	bio->bi_end_io = end_io_wq->end_io;
+fs/btrfs/disk-io.c:3586:		bio->bi_end_io = btrfs_end_super_write;
+fs/btrfs/disk-io.c:3684:	bio->bi_end_io = btrfs_end_empty_barrier;
+fs/btrfs/extent_io.c:2683:	repair_bio->bi_end_io = failed_bio->bi_end_io;
+fs/btrfs/extent_io.c:3078:	bio->bi_end_io = end_io_func;
+fs/btrfs/inode.c:7811:		bio->bi_end_io = btrfs_end_dio_bio;
+fs/btrfs/raid56.c:1329:		bio->bi_end_io = raid_write_end_io;
+fs/btrfs/raid56.c:1560:		bio->bi_end_io = raid_rmw_end_io;
+fs/btrfs/raid56.c:2099:		bio->bi_end_io = raid_recover_end_io;
+fs/btrfs/raid56.c:2464:		bio->bi_end_io = raid_write_end_io;
+fs/btrfs/raid56.c:2642:		bio->bi_end_io = raid56_parity_scrub_end_io;
+fs/btrfs/scrub.c:1405:	bio->bi_end_io = scrub_bio_wait_endio;
+fs/btrfs/scrub.c:1657:		bio->bi_end_io = scrub_wr_bio_end_io;
+fs/btrfs/scrub.c:2003:		bio->bi_end_io = scrub_bio_end_io;
+fs/btrfs/scrub.c:2125:	bio->bi_end_io = scrub_missing_raid56_end_io;
+fs/btrfs/scrub.c:2705:	bio->bi_end_io = scrub_parity_bio_endio;
+fs/btrfs/volumes.c:6274:	bio->bi_end_io = bbio->end_io;
+fs/btrfs/volumes.c:6342:	bio->bi_end_io = btrfs_end_bio;
+fs/btrfs/volumes.c:6400:	bbio->end_io = first_bio->bi_end_io;
+fs/buffer.c:3037:	bio->bi_end_io = end_bio_bh_io_sync;
+fs/direct-io.c:425:		bio->bi_end_io = dio_bio_end_aio;
+fs/direct-io.c:427:		bio->bi_end_io = dio_bio_end_io;
+fs/erofs/data.c:223:		bio->bi_end_io = erofs_readendio;
+fs/erofs/zdata.c:1213:				bio->bi_end_io = z_erofs_decompressqueue_endio;
+fs/ext4/page-io.c:340:	bio->bi_end_io = NULL;
+fs/ext4/page-io.c:408:	bio->bi_end_io = ext4_end_bio;
+fs/ext4/readpage.c:381:			bio->bi_end_io = mpage_end_io;
+fs/f2fs/data.c:449:		bio->bi_end_io = f2fs_read_end_io;
+fs/f2fs/data.c:452:		bio->bi_end_io = f2fs_write_end_io;
+fs/f2fs/data.c:1045:	bio->bi_end_io = f2fs_read_end_io;
+fs/f2fs/data.c:3572:	bio->bi_end_io = dio->orig_end_io;
+fs/f2fs/data.c:3591:	dio->orig_end_io = bio->bi_end_io;
+fs/f2fs/data.c:3595:	bio->bi_end_io = f2fs_dio_end_io;
+fs/f2fs/segment.c:1229:		bio->bi_end_io = f2fs_submit_discard_endio;
+fs/gfs2/lops.c:268:	bio->bi_end_io = end_io;
+fs/gfs2/meta_io.c:231:		bio->bi_end_io = gfs2_meta_read_endio;
+fs/gfs2/ops_fstype.c:256:	bio->bi_end_io = end_bio_io_page;
+fs/iomap/buffered-io.c:320:		ctx->bio->bi_end_io = iomap_read_end_io;
+fs/iomap/buffered-io.c:1227:	ioend->io_bio->bi_end_io = iomap_writepage_end_bio;
+fs/iomap/direct-io.c:195:	bio->bi_end_io = iomap_dio_bio_end_io;
+fs/iomap/direct-io.c:279:		bio->bi_end_io = iomap_dio_bio_end_io;
+fs/jfs/jfs_logmgr.c:1990:	bio->bi_end_io = lbmIODone;
+fs/jfs/jfs_logmgr.c:2134:	bio->bi_end_io = lbmIODone;
+fs/jfs/jfs_metapage.c:422:		bio->bi_end_io = metapage_write_end_io;
+fs/jfs/jfs_metapage.c:503:			bio->bi_end_io = metapage_read_end_io;
+fs/mpage.c:63:	bio->bi_end_io = mpage_end_io;
+fs/nfs/blocklayout/blocklayout.c:134:		bio->bi_end_io = end_io;
+fs/nilfs2/segbuf.c:357:	bio->bi_end_io = nilfs_end_bio_write;
+fs/ocfs2/cluster/heartbeat.c:534:	bio->bi_end_io = o2hb_bio_end_io;
+fs/xfs/xfs_aops.c:513:		ioend->io_bio->bi_end_io = xfs_end_bio;
+fs/xfs/xfs_buf.c:1371:	bio->bi_end_io = xfs_buf_bio_end_io;
+fs/xfs/xfs_log_cil.c:561:		bio->bi_end_io = xlog_discard_endio;
+kernel/power/swap.c:283:		bio->bi_end_io = hib_end_io;
+mm/page_io.c:41:		bio->bi_end_io = end_io;

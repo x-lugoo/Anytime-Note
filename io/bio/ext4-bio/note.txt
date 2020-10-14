@@ -1,0 +1,39 @@
+
+
+208 fs/ext4/page-io.c:340:  bio->bi_end_io = NULL;
+209 fs/ext4/page-io.c:408:  bio->bi_end_io = ext4_end_bio;
+210 fs/ext4/readpage.c:381: bio->bi_end_io = mpage_end_io
+
+
+write:
+ext4_end_bio-> ext4_finish_bio (wake_up_page_bit()) :
+
+wake up the waiting process if the page 
+exist waiter(PG_waiters flags) include/linux/page-flags.h))
+
+<source code snip>
+if (!PageWaiters(page))
+       return;
+wake_up_page_bit(page, bit);
+</source code snip>
+
+
+read:
+mpage_end_io-> __read_end_io (unlock_page())
+
+wake up the waiting process if the page 
+exist waiter(PG_waiters flags) include/linux/page-flags.h))
+
+<source code snip>
+if (clear_bit_unlock_is_negative_byte(PG_locked, &page->flags))
+        wake_up_page_bit(page, PG_locked);
+
+static inline bool clear_bit_unlock_is_negative_byte(long nr, volatile void *mem)
+{
+        clear_bit_unlock(nr, mem);
+        /* smp_mb__after_atomic(); */
+        return test_bit(PG_waiters, mem);
+}
+</source code snip>
+
+
