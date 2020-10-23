@@ -1,0 +1,179 @@
+
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 83  of event 'cpu-clock:pppH'
+# Event count (approx.): 20750000
+#
+# Children      Self  Command  Shared Object      Symbol                            
+# ........  ........  .......  .................  ..................................
+#
+    83.13%     0.00%  dd       [kernel.kallsyms]  [k] entry_SYSCALL_64
+            |
+            ---entry_SYSCALL_64
+               |          
+               |--73.49%--do_syscall_64
+               |          |          
+               |          |--46.99%--ksys_read
+               |          |          |          
+               |          |          |--42.17%--vfs_read
+               |          |          |          |          
+               |          |          |          |--34.94%--new_sync_read
+               |          |          |          |          |          
+               |          |          |          |           --32.53%--generic_file_buffered_read
+               |          |          |          |                     |          
+               |          |          |          |                     |--12.05%--copy_page_to_iter
+               |          |          |          |                     |          |          
+               |          |          |          |                     |           --10.84%--copy_user_generic_unrolled
+               |          |          |          |                     |          
+               |          |          |          |                     |--6.02%--page_cache_readahead_unbounded
+               |          |          |          |                     |          |          
+               |          |          |          |                     |          |--3.61%--add_to_page_cache_lru
+               |          |          |          |                     |          |          |          
+               |          |          |          |                     |          |          |--2.41%--__add_to_page_cache_locked
+               |          |          |          |                     |          |          |          mem_cgroup_charge
+               |          |          |          |                     |          |          |          
+               |          |          |          |                     |          |           --1.20%--lru_cache_add
+               |          |          |          |                     |          |                     pagevec_lru_move_fn
+               |          |          |          |                     |          |                     _raw_spin_unlock_irqrestore
+               |          |          |          |                     |          |          
+               |          |          |          |                     |          |--1.20%--__alloc_pages_nodemask
+               |          |          |          |                     |          |          get_page_from_freelist
+               |          |          |          |                     |          |          
+               |          |          |          |                     |           --1.20%--read_pages
+               |          |          |          |                     |                     mpage_readahead
+               |          |          |          |                     |                     submit_bio_noacct
+               |          |          |          |                     |                     submit_bio_checks
+               |          |          |          |                     |                     blk_throtl_bio
+               |          |          |          |                     |          
+               |          |          |          |                     |--3.61%--touch_atime
+               |          |          |          |                     |          |          
+               |          |          |          |                     |           --2.41%--atime_needs_update
+               |          |          |          |                     |                     current_time
+               |          |          |          |                     |                     ktime_get_coarse_real_ts64
+               |          |          |          |                     |          
+               |          |          |          |                     |--3.61%--pagecache_get_page
+               |          |          |          |                     |          |          
+               |          |          |          |                     |           --2.41%--find_get_entry
+               |          |          |          |                     |                     |          
+               |          |          |          |                     |                      --1.20%--xas_load
+               |          |          |          |                     |          
+               |          |          |          |                     |--2.41%--wait_on_page_bit_common
+               |          |          |          |                     |          io_schedule
+               |          |          |          |                     |          schedule
+               |          |          |          |                     |          __schedule
+               |          |          |          |                     |          finish_task_switch
+               |          |          |          |                     |          
+               |          |          |          |                      --1.20%--mark_page_accessed
+               |          |          |          |          
+               |          |          |           --2.41%--__fsnotify_parent
+               |          |          |          
+               |          |           --2.41%--__fdget_pos
+               |          |                     |          
+               |          |                      --1.20%--__fget_light
+               |          |          
+               |          |--14.46%--syscall_enter_from_user_mode
+               |          |          
+               |          |--10.84%--ksys_write
+               |          |          |          
+               |          |          |--8.43%--vfs_write
+               |          |          |          |          
+               |          |          |          |--6.02%--tty_write
+               |          |          |          |          n_tty_write
+               |          |          |          |          |          
+               |          |          |          |          |--2.41%--uart_write_room
+               |          |          |          |          |          _raw_spin_unlock_irqrestore
+               |          |          |          |          |          
+               |          |          |          |          |--1.20%--uart_write
+               |          |          |          |          |          _raw_spin_unlock_irqrestore
+               |          |          |          |          |          
+               |          |          |          |          |--1.20%--uart_start
+               |          |          |          |          |          _raw_spin_unlock_irqrestore
+               |          |          |          |          |          
+               |          |          |          |           --1.20%--do_output_char
+               |          |          |          |                     uart_write
+               |          |          |          |                     _raw_spin_unlock_irqrestore
+               |          |          |          |          
+               |          |          |           --1.20%--rw_verify_area
+               |          |          |          
+               |          |           --2.41%--__fdget_pos
+               |          |                     |          
+               |          |                      --1.20%--__fget_light
+               |          |          
+               |           --1.20%--__x64_sys_read
+               |          
+                --9.64%--syscall_exit_to_user_mode
+                          |          
+                           --7.23%--exit_to_user_mode_prepare
+                                     task_work_run
+                                     __fput
+                                     blkdev_close
+                                     __blkdev_put
+                                     |          
+                                     |--6.02%--truncate_inode_pages_range
+                                     |          |          
+                                     |          |--3.61%--__pagevec_release
+                                     |          |          release_pages
+                                     |          |          |          
+                                     |          |          |--1.20%--_raw_spin_unlock_irqrestore
+                                     |          |          |          
+                                     |          |          |--1.20%--mem_cgroup_uncharge_list
+                                     |          |          |          uncharge_batch
+                                     |          |          |          
+                                     |          |           --1.20%--free_unref_page_list
+                                     |          |          
+                                     |          |--1.20%--delete_from_page_cache_batch
+                                     |          |          _raw_spin_unlock_irqrestore
+                                     |          |          
+                                     |           --1.20%--delete_from_page_cache
+                                     |                     _raw_spin_unlock_irqrestore
+                                     |          
+                                      --1.20%--on_each_cpu_cond_mask
+                                                smp_call_function_many_cond
+
+
+cgroup blkio 使用工作队列执行派发bio
+
+ => 0xffffffffc019406a
+ => testb_softirq_done_fn
+ => testb_queue_rq
+ => __blk_mq_try_issue_directly
+ => blk_mq_try_issue_list_directly
+ => blk_mq_sched_insert_requests
+ => blk_mq_flush_plug_list
+ => blk_finish_plug
+ => blk_throtl_dispatch_work_fn
+ => process_one_work
+ => worker_thread
+ => kthread
+ => ret_from_fork
+ 
+
+定时器函数被执行， 工作队列被定时器唤醒
+ 
+
+    blk_throtl_dispatch_work
+ => trace_event_raw_event_workqueue_queue_work                                          
+ => __queue_work                                                                        
+ => queue_work_on                                                                       
+ => throtl_pending_timer_fn                                                             
+ => call_timer_fn                                                                       
+ => __run_timers.part.0                                                                 
+ => run_timer_softirq                                                                   
+ => __do_softirq                                                                        
+ => asm_call_irq_on_stack                                                               
+ => do_softirq_own_stack                                                                
+ => irq_exit_rcu                                                                        
+ => sysvec_apic_timer_interrupt                                                         
+ => asm_sysvec_apic_timer_interrupt                                                     
+ => default_idle                                                                        
+ => default_idle_call                                                                   
+ => do_idle                                                                             
+ => cpu_startup_entry                                                                   
+ => secondary_startup_64                                                                
+ => 0                      
+ 
+blk_throtl_bio  唤醒定时器 -》 唤醒工作队列 
+
