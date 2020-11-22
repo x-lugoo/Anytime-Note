@@ -1,0 +1,26 @@
+
+<snip>
+In cached_dev_cache_miss() and check_should_bypass(), REQ_META is used
+to check whether a bio is for metadata request. REQ_META is used for
+blktrace, the correct REQ_ flag should be REQ_PRIO. This flag means the
+bio should be prior to other bio, and frequently be used to indicate
+metadata io in file system code.
+
+This patch replaces REQ_META with correct flag REQ_PRIO.
+
+CC Adam Manzanares because he explains to me what REQ_PRIO is for.
+https://patchwork.kernel.org/project/linux-block/patch/20181008124121.20192-4-colyli@suse.de/
+.......
+</snip>
+
+<snip>
+FUA
+https://www.kernel.org/doc/html/latest/block/queue-sysfs.html
+</snip>
+
+REQ_META for blktrace
+REQ_PRIO for metadate io
+FUA :
+  stands for Force Unit Access. If the FUA flag is set that means that write requests must bypass the volatile cache of the storage device.
+
+
