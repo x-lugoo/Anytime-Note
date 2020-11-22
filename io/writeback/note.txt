@@ -1,0 +1,27 @@
+
+b_dirty (first dirty)
+
+b_io (when selected for IO)
+
+b_more_io (for requeue purposes, when SYNC but being locked, just for requeue)
+
+writeback_sb_inodes()
+{
+
+1682                         /*
+1683                          * If this inode is locked for writeback and we are not
+1684                          * doing writeback-for-data-integrity, move it to
+1685                          * b_more_io so that writeback can proceed with the
+1686                          * other inodes on s_io.
+1687                          *
+1688                          * We'll have another go at writing back this inode
+1689                          * when we completed a full scan of b_io.
+1690                          */
+1691                         spin_unlock(&inode->i_lock);
+1692                         requeue_io(inode, wb);
+1693                         trace_writeback_sb_inodes_requeue(inode);
+
+}
+
+b_dirty_time (update file timestamp)
+
