@@ -1,0 +1,24 @@
+
+bio: The best explaintion: stands for the loacation in memory and on the device 
+	1188  * submit_bio_noacct - re-submit a bio to the block device layer for I/O
+	1189  * @bio:  The bio describing the location in memory and on the device.
+
+	bio can be merged into a request, or allocate a new request for the bio.
+
+request:  The block layer allocate request to let the driver device handle it.
+	  All the bioes in the request are a phythic continous disk sector.
+
+          request may not be queued directly to hardware if:
+          1. This request can be merged with another one
+          2. We want to place request at plug queue for possible future merging
+          3. There is an IO scheduler active at this queue
+
+2126  * blk_mq_submit_bio - Create and send a request to block device.
+2127  * @bio: Bio pointer.
+2128  *
+2129  * Builds up a request structure from @q and @bio and send to the device. The
+2130  * request may not be queued directly to hardware if:
+2131  * * This request can be merged with another one
+2132  * * We want to place request at plug queue for possible future merging
+2133  * * There is an IO scheduler active at this queue
+
