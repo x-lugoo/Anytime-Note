@@ -23,5 +23,6 @@ writeback_sb_inodes()
 
 }
 
-b_dirty_time (update file timestamp)
+b_dirty_time (update file timestamp, introduced by lazytime(mount -o lazytime..)
+	don't update timestamp into disk until after 12 hours.(commit:0ae45f63d4e)
 
